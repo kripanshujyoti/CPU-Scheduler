@@ -1,0 +1,576 @@
+/* ==========================================================================
+   Scheduler Bench — visual identity
+
+   Concept: an engineering console for watching a CPU scheduler think.
+   Dark instrument panel base, warm amber for "currently executing",
+   cool teal for the scrubber/playhead, and a categorical palette of eight
+   hues so each process reads as a distinct, trackable "signal" across the
+   timeline — the same way an oscilloscope assigns a color per channel.
+   ========================================================================== */
+
+:root {
+  /* Base surfaces */
+  --bg: #0F1216;
+  --panel: #171B22;
+  --panel-alt: #1D222B;
+  --border: #2B313D;
+  --border-soft: #232833;
+
+  /* Text */
+  --text: #E8EBF1;
+  --text-dim: #8891A3;
+  --text-faint: #565E6E;
+
+  /* Accents */
+  --accent: #FF9152;      /* active/running state */
+  --accent-cool: #4FD7C4; /* scrubber, secondary highlight */
+  --danger: #E2686F;
+
+  /* Process categorical palette (8 distinct channels) */
+  --p1: #5B8DEF;
+  --p2: #F2A65A;
+  --p3: #6FCF97;
+  --p4: #E27D8E;
+  --p5: #B48EAD;
+  --p6: #E0C341;
+  --p7: #56C2D9;
+  --p8: #9B8AFB;
+
+  --radius: 8px;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Top bar                                                                 */
+/* ---------------------------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-mark {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--accent);
+  background: var(--panel-alt);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  line-height: 1;
+}
+
+.brand-text h1 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.brand-text p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.algo-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.tab {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  color: var(--text-dim);
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.tab:hover { color: var(--text); }
+
+.tab.active {
+  color: var(--bg);
+  background: var(--accent);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Layout                                                                  */
+/* ---------------------------------------------------------------------- */
+
+.layout {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  padding: 20px 28px;
+}
+
+@media (max-width: 880px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.panel h2 {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Process table (inputs)                                                  */
+/* ---------------------------------------------------------------------- */
+
+.process-table {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.process-row {
+  display: grid;
+  grid-template-columns: 34px 1fr 1fr 1fr 22px;
+  gap: 6px;
+  align-items: center;
+}
+
+.process-row--head span {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.process-row .pid-chip {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #10131A;
+}
+
+.process-row input {
+  width: 100%;
+  background: var(--panel-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 6px 7px;
+}
+
+.process-row input:focus {
+  outline: 2px solid var(--accent-cool);
+  outline-offset: 1px;
+}
+
+.row-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.row-remove:hover { color: var(--danger); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  color: var(--text-dim);
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.btn-ghost:hover { color: var(--text); border-color: var(--text-faint); }
+
+.params {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-soft);
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.param-row label {
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.param-row input {
+  width: 70px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  padding: 6px 7px;
+  text-align: right;
+}
+
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: #1A1200;
+  border: none;
+  border-radius: 8px;
+  padding: 11px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+
+.btn-primary:hover { filter: brightness(1.08); }
+
+/* ---------------------------------------------------------------------- */
+/* Visualization panel                                                    */
+/* ---------------------------------------------------------------------- */
+
+.core-readout {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.core-box, .clock-box {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 9px 14px;
+}
+
+.core-label, .clock-label {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.core-current {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 44px;
+}
+
+.clock-value {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-cool);
+  min-width: 24px;
+}
+
+.playback-controls {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn-icon:hover { border-color: var(--accent-cool); color: var(--accent-cool); }
+
+.gantt-wrap {
+  position: relative;
+  margin-bottom: 26px;
+}
+
+.gantt {
+  display: flex;
+  height: 46px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+}
+
+.gantt-block {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: #10131A;
+  position: relative;
+  border-right: 1px solid rgba(0,0,0,0.18);
+  min-width: 2px;
+  overflow: hidden;
+}
+
+.gantt-block.idle {
+  background: repeating-linear-gradient(
+    45deg, var(--panel-alt), var(--panel-alt) 6px, var(--border-soft) 6px, var(--border-soft) 12px
+  );
+  color: var(--text-faint);
+}
+
+.gantt-ruler {
+  display: flex;
+  margin-top: 4px;
+}
+
+.gantt-ruler span {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-faint);
+  border-left: 1px solid var(--border-soft);
+  padding-left: 3px;
+}
+
+.playhead {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 46px;
+  background: var(--accent-cool);
+  box-shadow: 0 0 8px var(--accent-cool);
+  pointer-events: none;
+  transition: left 0.08s linear;
+  display: none;
+}
+
+.playhead.active { display: block; }
+
+/* ---------------------------------------------------------------------- */
+/* Metrics table                                                          */
+/* ---------------------------------------------------------------------- */
+
+.metrics-section h2, .compare-section h2 {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin: 0 0 10px;
+}
+
+.metrics-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  margin-bottom: 12px;
+}
+
+.metrics-table th {
+  text-align: left;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.metrics-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-soft);
+  color: var(--text);
+}
+
+.metrics-table td.pid-cell {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.pid-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.averages {
+  display: flex;
+  gap: 22px;
+  padding: 12px 14px;
+  background: var(--panel-alt);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.avg-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.avg-item .avg-label {
+  font-size: 10.5px;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.avg-item .avg-value {
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Comparison chart                                                       */
+/* ---------------------------------------------------------------------- */
+
+.compare-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 130px 1fr 60px;
+  align-items: center;
+  gap: 10px;
+}
+
+.compare-row .compare-label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+.compare-row.is-current .compare-label { color: var(--accent); font-weight: 600; }
+
+.compare-bar-track {
+  background: var(--panel-alt);
+  border-radius: 5px;
+  height: 16px;
+  overflow: hidden;
+}
+
+.compare-bar-fill {
+  height: 100%;
+  background: var(--accent-cool);
+  border-radius: 5px;
+  transition: width 0.3s ease;
+}
+
+.compare-row.is-current .compare-bar-fill { background: var(--accent); }
+
+.compare-row .compare-value {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Footer                                                                  */
+/* ---------------------------------------------------------------------- */
+
+.foot {
+  text-align: center;
+  padding: 14px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  border-top: 1px solid var(--border);
+}
+
+/* Accessibility: visible keyboard focus everywhere */
+button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--accent-cool);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playhead, .compare-bar-fill, .tab, .btn-primary { transition: none; }
+}

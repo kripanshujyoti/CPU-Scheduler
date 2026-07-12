@@ -1,0 +1,11 @@
+# Build artifacts
+cpu_scheduler
+*.o
+*.out
+*.exe
+
+# OS / editor cruft
+.DS_Store
+.vscode/
+.idea/
+*.swp

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scheduler Bench — CPU Scheduling Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">▸_</span>
+      <div class="brand-text">
+        <h1>Scheduler Bench</h1>
+        <p>CPU scheduling algorithms, run and compared side by side</p>
+      </div>
+    </div>
+
+    <nav class="algo-tabs" role="tablist" aria-label="Scheduling algorithm">
+      <button class="tab active" data-algo="fcfs" role="tab" aria-selected="true">FCFS</button>
+      <button class="tab" data-algo="sjf" role="tab" aria-selected="false">SJF</button>
+      <button class="tab" data-algo="priority" role="tab" aria-selected="false">Priority</button>
+      <button class="tab" data-algo="rr" role="tab" aria-selected="false">Round Robin</button>
+      <button class="tab" data-algo="mlfq" role="tab" aria-selected="false">MLFQ</button>
+    </nav>
+  </header>
+
+  <main class="layout">
+
+    <!-- LEFT: process input panel -->
+    <section class="panel process-panel" aria-label="Process configuration">
+      <div class="panel-head">
+        <h2>Processes</h2>
+        <button class="btn-ghost" id="add-process">+ Add</button>
+      </div>
+
+      <div class="process-table" id="process-table">
+        <div class="process-row process-row--head">
+          <span>PID</span><span>Arrival</span><span>Burst</span><span>Priority</span><span></span>
+        </div>
+        <!-- rows injected by JS -->
+      </div>
+
+      <div class="params" id="algo-params">
+        <!-- algorithm-specific parameter inputs injected by JS -->
+      </div>
+
+      <button class="btn-primary" id="run-btn">Run scheduler</button>
+    </section>
+
+    <!-- RIGHT: visualization -->
+    <section class="panel viz-panel" aria-label="Timeline visualization">
+
+      <div class="core-readout">
+        <div class="core-box" id="core-box">
+          <span class="core-label">CPU</span>
+          <span class="core-current" id="core-current">idle</span>
+        </div>
+        <div class="clock-box">
+          <span class="clock-label">t =</span>
+          <span class="clock-value" id="clock-value">0</span>
+        </div>
+        <div class="playback-controls">
+          <button class="btn-icon" id="play-btn" aria-label="Play">▶</button>
+          <button class="btn-icon" id="reset-btn" aria-label="Reset">↺</button>
+        </div>
+      </div>
+
+      <div class="gantt-wrap">
+        <div class="gantt" id="gantt"></div>
+        <div class="gantt-ruler" id="gantt-ruler"></div>
+        <div class="playhead" id="playhead"></div>
+      </div>
+
+      <div class="metrics-section">
+        <h2 id="algo-title">FCFS — First-Come-First-Served</h2>
+        <table class="metrics-table" id="metrics-table">
+          <thead>
+            <tr><th>PID</th><th>Arrival</th><th>Burst</th><th>Complete</th><th>Waiting</th><th>Turnaround</th><th>Response</th></tr>
+          </thead>
+          <tbody id="metrics-body"></tbody>
+        </table>
+        <div class="averages" id="averages"></div>
+      </div>
+
+      <div class="compare-section">
+        <h2>All algorithms, this workload</h2>
+        <div class="compare-chart" id="compare-chart"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>Runs entirely client-side — no data leaves your browser.</span>
+  </footer>
+</div>
+
+<script src="algorithms.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
